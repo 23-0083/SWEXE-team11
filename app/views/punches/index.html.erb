@@ -1,0 +1,190 @@
+
+<div style="max-width: 1000px; margin: 35px auto; padding: 0 15px; font-family: sans-serif;">
+
+  <h1>スポーツジム勤務タイムカード</h1>
+
+  <nav style="margin-bottom: 25px;">
+    <%= link_to "打刻", root_path %> |
+    <%= link_to "勤務履歴", timecards_path %>
+  </nav>
+
+  <% if notice.present? %>
+    <p style="color: green;">
+      <%= notice %>
+    </p>
+  <% end %>
+
+  <% if alert.present? %>
+    <p style="color: red;">
+      <%= alert %>
+    </p>
+  <% end %>
+
+  <h2>出勤・退勤打刻</h2>
+
+  <div style="
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 25px;
+  ">
+
+    <%= form_with url: punch_path,
+                  method: :post,
+                  local: true do %>
+
+      <div style="margin-bottom: 20px;">
+        <label for="employee_code">スタッフID</label>
+        <br>
+
+        <%= text_field_tag :employee_code,
+            nil,
+            placeholder: "例：001",
+            required: true,
+            autocomplete: "off",
+            style: "padding: 10px; width: 250px; max-width: 90%;" %>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label for="pin">PINコード</label>
+        <br>
+
+        <%= password_field_tag :pin,
+            nil,
+            required: true,
+            autocomplete: "off",
+            style: "padding: 10px; width: 250px; max-width: 90%;" %>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+
+        <%= button_tag "出勤",
+            type: "submit",
+            name: "action_type",
+            value: "clock_in",
+            style: "
+              background: #16a34a;
+              color: white;
+              padding: 15px 40px;
+              border: none;
+              cursor: pointer;
+            " %>
+
+        <%= button_tag "退勤",
+            type: "submit",
+            name: "action_type",
+            value: "clock_out",
+            style: "
+              background: #dc2626;
+              color: white;
+              padding: 15px 40px;
+              border: none;
+              cursor: pointer;
+            " %>
+
+      </div>
+
+      <h3>休憩</h3>
+
+      <div style="margin-bottom: 15px;">
+
+        <%= select_tag :break_minutes,
+            options_for_select(
+              [5, 15, 30, 45, 60].map do |minutes|
+                ["#{minutes}分", minutes]
+              end,
+              15
+            ),
+            style: "padding: 10px;" %>
+
+        <%= button_tag "休憩開始",
+            type: "submit",
+            name: "action_type",
+            value: "break_start",
+            style: "
+              background: #f59e0b;
+              color: black;
+              padding: 15px 25px;
+              border: none;
+              cursor: pointer;
+            " %>
+
+        <%= button_tag "勤務中に戻る",
+            type: "submit",
+            name: "action_type",
+            value: "break_end",
+            style: "
+              background: #e5e7eb;
+              color: black;
+              padding: 15px 25px;
+              border: none;
+              cursor: pointer;
+            " %>
+
+      </div>
+
+    <% end %>
+
+  </div>
+
+  <h2>本日の勤務状況</h2>
+
+  <div id="punch-status">
+    <%= render "status_table" %>
+  </div>
+
+</div>
+
+<script>
+  function startPunchStatusRefresh() {
+    // 古いタイマーがあれば停止
+    if (window.punchRefreshTimer) {
+      clearInterval(window.punchRefreshTimer);
+    }
+
+    // 30秒ごとに勤務状況だけ更新
+    window.punchRefreshTimer = setInterval(async () => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
+      try {
+        const response = await fetch("/punch/status", {
+          method: "GET",
+          headers: {
+            "Accept": "text/html"
+          },
+          credentials: "same-origin",
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const html = await response.text();
+        const container = document.getElementById("punch-status");
+
+        if (container) {
+          container.innerHTML = html;
+        }
+
+      } catch (error) {
+        console.error(
+          "勤務状況の自動更新に失敗しました",
+          error
+        );
+      }
+    }, 30000);
+  }
+
+  startPunchStatusRefresh();
+
+  // Turboによるページ移動時のタイマー重複を防止
+  document.addEventListener("turbo:before-cache", () => {
+    if (window.punchRefreshTimer) {
+      clearInterval(window.punchRefreshTimer);
+      window.punchRefreshTimer = null;
+    }
+  });
+</script>

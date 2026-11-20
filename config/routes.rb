@@ -1,14 +1,34 @@
+
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
-  get "up" => "rails/health#show", as: :rails_health_check
+  # 打刻画面
+  root "punches#index"
 
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+  # 出勤・退勤・休憩
+  post "/punch",
+       to: "punches#create",
+       as: :punch
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  # 勤務状況の自動更新
+  get "/punch/status",
+      to: "punches#status",
+      as: :punch_status
+
+  # 勤務履歴・CSV出力
+  get "/timecards",
+      to: "timecards#index",
+      as: :timecards
+
+  # 勤務履歴の編集
+  patch "/timecards/:id",
+        to: "timecards#update",
+        as: :timecard
+
+  # 勤務履歴の削除
+  delete "/timecards/:id",
+         to: "timecards#destroy"
+
+  # スタッフ管理・管理者ログインは別担当
+  # 既に実装されているルートがあれば残す
+
 end

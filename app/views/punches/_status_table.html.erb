@@ -1,0 +1,95 @@
+
+<div style="overflow-x: auto;">
+
+  <table border="1"
+         cellpadding="12"
+         style="
+           width: 100%;
+           border-collapse: collapse;
+           text-align: center;
+         ">
+
+    <thead style="background: #eee;">
+      <tr>
+        <th>ID</th>
+        <th>氏名</th>
+        <th>状態</th>
+        <th>出勤</th>
+        <th>退勤</th>
+        <th>休憩（分）</th>
+        <th>勤務時間</th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      <% @timecards.each do |card| %>
+
+        <tr>
+          <td>
+            <%= card.employee.employee_code %>
+          </td>
+
+          <td>
+            <%= card.employee.name %>
+          </td>
+
+          <td>
+            <% if card.clock_out.present? %>
+              退勤済
+
+            <% elsif card.on_break? %>
+              休憩中
+              （〜<%= card.break_until.strftime("%H:%M") %>）
+
+            <% elsif card.clock_in.present? %>
+              勤務中
+
+            <% else %>
+              未出勤
+            <% end %>
+          </td>
+
+          <td>
+            <%= card.clock_in&.strftime("%H:%M") || "-" %>
+          </td>
+
+          <td>
+            <%= card.clock_out&.strftime("%H:%M") || "-" %>
+          </td>
+
+          <td>
+            <%= card.break_minutes.to_i %>
+          </td>
+
+          <td>
+            <% if card.clock_out.present? &&
+                  card.work_minutes %>
+
+              <%= format(
+                    "%d時間%02d分",
+                    card.work_minutes / 60,
+                    card.work_minutes % 60
+                  ) %>
+
+            <% else %>
+              -
+            <% end %>
+          </td>
+        </tr>
+
+      <% end %>
+
+      <% if @timecards.empty? %>
+        <tr>
+          <td colspan="7"
+              style="text-align: center;">
+            本日の勤務記録はありません
+          </td>
+        </tr>
+      <% end %>
+
+    </tbody>
+  </table>
+
+</div>

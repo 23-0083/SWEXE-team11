@@ -1,0 +1,148 @@
+
+<div style="max-width: 1200px; margin: 35px auto; font-family: sans-serif;">
+  <h1>スポーツジム勤務タイムカード</h1>
+
+  <nav style="margin-bottom: 25px;">
+    <%= link_to "打刻", root_path %> |
+    <%= link_to "勤務履歴", timecards_path %>
+  </nav>
+
+  <% if notice.present? %>
+    <p style="color: green;"><%= notice %></p>
+  <% end %>
+
+  <% if alert.present? %>
+    <p style="color: red;"><%= alert %></p>
+  <% end %>
+
+  <h2>勤務履歴</h2>
+
+  <div style="border: 1px solid #ccc; padding: 20px; margin-bottom: 20px;">
+    <%= form_with url: timecards_path, method: :get, local: true do %>
+      <label>月</label>
+      <%= month_field_tag :month, @month %>
+
+      <label>スタッフ</label>
+      <%= select_tag :employee_id,
+          options_for_select(
+            [["全員", ""]] +
+            @employees.map { |e| ["#{e.employee_code} #{e.name}", e.id] },
+            @employee_id
+          ) %>
+
+      <%= submit_tag "表示" %>
+
+      <%= button_tag "この月のCSV",
+          type: "submit",
+          formaction: "/timecards.csv" %>
+    <% end %>
+  </div>
+
+  <h3>
+    合計勤務時間：
+    <%= format("%d時間%02d分",
+        @total_minutes / 60, @total_minutes % 60) %>
+  </h3>
+
+  <div style="overflow-x: auto;">
+    <table border="1" cellpadding="12"
+           style="width: 100%; border-collapse: collapse;">
+      <thead style="background: #eee;">
+        <tr>
+          <th>日付</th>
+          <th>ID</th>
+          <th>氏名</th>
+          <th>出勤</th>
+          <th>退勤</th>
+          <th>休憩</th>
+          <th>勤務時間</th>
+          <th>備考</th>
+          <% if session[:admin_logged_in] == true %>
+            <th>管理</th>
+          <% end %>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% @timecards.each do |card| %>
+          <tr>
+            <td><%= card.work_date.strftime("%m/%d") %></td>
+            <td><%= card.employee.employee_code %></td>
+            <td><%= card.employee.name %></td>
+            <td><%= card.clock_in&.strftime("%H:%M") || "-" %></td>
+            <td><%= card.clock_out&.strftime("%H:%M") || "-" %></td>
+            <td><%= card.break_minutes.to_i %>分</td>
+            <td>
+              <% if card.work_minutes %>
+                <%= format("%d時間%02d分",
+                    card.work_minutes / 60,
+                    card.work_minutes % 60) %>
+              <% else %>
+                -
+              <% end %>
+            </td>
+            <td><%= card.note %></td>
+
+            <% if session[:admin_logged_in] == true %>
+              <td>
+                <details>
+                  <summary>編集</summary>
+
+                  <%= form_with model: card,
+                      url: timecard_path(card),
+                      method: :patch, local: true do |f| %>
+
+                    <p>
+                      出勤<br>
+                      <%= f.datetime_local_field :clock_in %>
+                    </p>
+
+                    <p>
+                      退勤<br>
+                      <%= f.datetime_local_field :clock_out %>
+                    </p>
+
+                    <p>
+                      休憩（分）<br>
+                      <%= f.number_field :break_minutes, min: 0 %>
+                    </p>
+
+                    <p>
+                      備考<br>
+                      <%= f.text_field :note %>
+                    </p>
+
+                    <%= f.submit "保存" %>
+                  <% end %>
+                </details>
+
+                <%= button_to "削除", timecard_path(card),
+                    method: :delete,
+                    form: {
+                      data: {
+                        turbo_confirm: "この勤務記録を削除しますか？"
+                      }
+                    } %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+
+        <% if @timecards.empty? %>
+          <tr>
+            <td colspan="<%= session[:admin_logged_in] == true ? 9 : 8 %>"
+                style="text-align: center;">
+              この月の勤務記録はありません
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% unless session[:admin_logged_in] == true %>
+    <p style="margin-top: 20px;">
+      勤務記録の編集・削除には管理者ログインが必要です。
+    </p>
+  <% end %>
+</div>

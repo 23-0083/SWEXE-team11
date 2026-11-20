@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  employee: one
+  work_date: 2026-11-20
+  clock_in: 2026-11-20 04:30:47
+  clock_out: 2026-11-20 04:30:47
+  break_minutes: 1
+  break_started_at: 2026-11-20 04:30:47
+  break_until: 2026-11-20 04:30:47
+  note: MyString
+
+two:
+  employee: two
+  work_date: 2026-11-20
+  clock_in: 2026-11-20 04:30:47
+  clock_out: 2026-11-20 04:30:47
+  break_minutes: 1
+  break_started_at: 2026-11-20 04:30:47
+  break_until: 2026-11-20 04:30:47
+  note: MyString
